@@ -5,7 +5,7 @@
     "description": "Support the next unicorn.",
     "targetAmount": 15000,
     "investedAmount": 18000,
-    "imageName": "invest2",
+    "imageName": "https://amir2501.github.io/media-storage-hackaton/images/invest2.jpeg",
     "longDescription": "We’re backing a revolutionary tech startup that’s solving real-world problems. Your investment isn’t just capital — it’s a vote of confidence in the next generation of innovation."
   },
   {
@@ -14,7 +14,7 @@
     "description": "Help build sustainable food systems.",
     "targetAmount": 12000,
     "investedAmount": 16000,
-    "imageName": "invest3",
+    "imageName": "https://amir2501.github.io/media-storage-hackaton/images/invest3.jpg",
     "longDescription": "Urban farming is how we reclaim our food independence. With your help, we can expand green spaces and deliver fresh produce directly to urban tables."
   },
   {
@@ -23,7 +23,7 @@
     "description": "Help build sustainable food systems.",
     "targetAmount": 12000,
     "investedAmount": 8000,
-    "imageName": "invest3",
+    "imageName": "https://amir2501.github.io/media-storage-hackaton/images/invest3.jpg",
     "longDescription": "Urban farming is how we reclaim our food independence. With your help, we can expand green spaces and deliver fresh produce directly to urban tables."
   },
   {
@@ -32,7 +32,7 @@
     "description": "Innovating for a cleaner tomorrow.",
     "targetAmount": 20000,
     "investedAmount": 15000,
-    "imageName": "invest4",
+    "imageName": "https://amir2501.github.io/media-storage-hackaton/images/invest4.jpeg",
     "longDescription": "At the heart of this lab is a vision: to create sustainable technologies that reshape industries. Join us in funding breakthrough green innovations."
   },
   {
@@ -41,7 +41,7 @@
     "description": "Give families a place to call home.",
     "targetAmount": 25000,
     "investedAmount": 13000,
-    "imageName": "invest5",
+    "imageName": "https://amir2501.github.io/media-storage-hackaton/images/invest5.jpg",
     "longDescription": "Every person deserves a safe, affordable place to live. This initiative brings us closer to that goal. Together, we can make it a reality."
   }
 ]
