@@ -1,0 +1,47 @@
+[
+  {
+    "id": "1",
+    "title": "Tech Startup",
+    "description": "Support the next unicorn.",
+    "targetAmount": 15000,
+    "investedAmount": 18000,
+    "imageName": "invest2",
+    "longDescription": "We’re backing a revolutionary tech startup that’s solving real-world problems. Your investment isn’t just capital — it’s a vote of confidence in the next generation of innovation."
+  },
+  {
+    "id": "2",
+    "title": "Urban Farming Expansion",
+    "description": "Help build sustainable food systems.",
+    "targetAmount": 12000,
+    "investedAmount": 16000,
+    "imageName": "invest3",
+    "longDescription": "Urban farming is how we reclaim our food independence. With your help, we can expand green spaces and deliver fresh produce directly to urban tables."
+  },
+  {
+    "id": "3",
+    "title": "Urban Farming Expansion",
+    "description": "Help build sustainable food systems.",
+    "targetAmount": 12000,
+    "investedAmount": 8000,
+    "imageName": "invest3",
+    "longDescription": "Urban farming is how we reclaim our food independence. With your help, we can expand green spaces and deliver fresh produce directly to urban tables."
+  },
+  {
+    "id": "4",
+    "title": "Green Tech Lab",
+    "description": "Innovating for a cleaner tomorrow.",
+    "targetAmount": 20000,
+    "investedAmount": 15000,
+    "imageName": "invest4",
+    "longDescription": "At the heart of this lab is a vision: to create sustainable technologies that reshape industries. Join us in funding breakthrough green innovations."
+  },
+  {
+    "id": "5",
+    "title": "Affordable Housing",
+    "description": "Give families a place to call home.",
+    "targetAmount": 25000,
+    "investedAmount": 13000,
+    "imageName": "invest5",
+    "longDescription": "Every person deserves a safe, affordable place to live. This initiative brings us closer to that goal. Together, we can make it a reality."
+  }
+]
