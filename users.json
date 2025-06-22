@@ -3,5 +3,15 @@
     "email": "test",
     "password": "test",
     "money": 36364
+  },
+  {
+    "email": "john@example.com",
+    "password": "1234",
+    "money": 5000
+  },
+  {
+    "email": "alice@example.com",
+    "password": "alice123",
+    "money": 7500
   }
 ]
