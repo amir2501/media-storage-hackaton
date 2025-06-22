@@ -166,8 +166,9 @@ app.get('/chats', (req, res) => {
 });
 
 app.post('/chats/send', (req, res) => {
-    const { from, to, text } = req.body;
+    const { from, to, message } = req.body;
     const chats = loadChats();
+
 
     let chat = chats.find(c => c.participants.includes(from) && c.participants.includes(to));
     if (!chat) {
@@ -179,7 +180,7 @@ app.post('/chats/send', (req, res) => {
         chats.push(chat);
     }
 
-    chat.messages.push({ from, text, timestamp: new Date().toISOString() });
+    chat.messages.push({ from, message, timestamp: new Date().toISOString() });
     saveChats(chats);
     res.json({ success: true });
 });
