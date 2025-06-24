@@ -185,6 +185,31 @@ app.post('/chats/send', (req, res) => {
     res.json({ success: true });
 });
 
+// Create a new empty chat if it doesn't exist
+app.post('/chats/create', (req, res) => {
+    const { from, to } = req.body;
+    if (!from || !to || from === to) {
+        return res.status(400).json({ message: 'Invalid participants' });
+    }
+
+    const chats = loadChats();
+    let existing = chats.find(c => c.participants.includes(from) && c.participants.includes(to));
+
+    if (existing) {
+        return res.json({ message: 'Chat already exists', chat: existing });
+    }
+
+    const newChat = {
+        chatId: `chat_${Date.now()}`,
+        participants: [from, to],
+        messages: []
+    };
+
+    chats.push(newChat);
+    saveChats(chats);
+    res.json({ message: 'Chat created', chat: newChat });
+});
+
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
