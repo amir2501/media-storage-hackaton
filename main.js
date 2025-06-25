@@ -65,6 +65,10 @@ app.post('/register', (req, res) => {
             return res.status(400).json({ error: 'Email already registered' });
         }
 
+        if (!name) const name = ""
+        if(!bio) const bio = ""
+        if (!bals) const bals = 1000
+
         const newUser = { email, password, name, bio, bals: 0 };
         users.push(newUser);
         saveJSON(connectPaths.USERS_FILE, users);
