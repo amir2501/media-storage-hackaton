@@ -1,0 +1,30 @@
+[
+  {
+    "email": "max@f1.com",
+    "password": "1234",
+    "name": "Max Verstappen",
+    "bio": "3x World Champion 🏆",
+    "bals": 1200
+  },
+  {
+    "email": "leclerc@f1.com",
+    "password": "1234",
+    "name": "Charles Leclerc",
+    "bio": "Ferrari driver since 2019 🔴",
+    "bals": 850
+  },
+  {
+    "email": "alonso@f1.com",
+    "password": "1234",
+    "name": "Fernando Alonso",
+    "bio": "The legend returns 🟢",
+    "bals": 1020
+  },
+  {
+    "email": "hamilton@f1.com",
+    "password": "1234",
+    "name": "Lewis Hamilton",
+    "bio": "7x Formula 1 World Champion 🏁",
+    "bals": 1450
+  }
+]
