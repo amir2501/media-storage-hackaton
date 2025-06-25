@@ -26,5 +26,12 @@
     "name": "Lewis Hamilton",
     "bio": "7x Formula 1 World Champion 🏁",
     "bals": 1450
+  },
+  {
+    "email": "test",
+    "password": "test",
+    "name": "Test accaunt",
+    "bio": " This is the test acc",
+    "bals": 1450
   }
 ]
