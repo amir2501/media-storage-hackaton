@@ -16,7 +16,7 @@ app.use(express.json());
 
 function log(message, data = null) {
     const time = new Date().toISOString();
-    console.log(`[${time}] ${message}`);
+    console.log(`Index.js: [${time}] ${message}`);
     if (data !== null) console.log(data);
 }
 
