@@ -264,6 +264,49 @@ app.post('/chats/create', (req, res) => {
     res.status(400).json({error: 'Invalid or unsupported type'});
 });
 
+app.post('/chats/group/create', (req, res) => {
+    const {groupName, participants, creator, type} = req.body;
+
+    if (type == 1) {
+        if (!groupName || !Array.isArray(participants) || participants.length < 2) {
+            return res.status(400).json({message: 'Invalid group data'});
+        }
+
+        const chats = loadJSON(hackatonPaths.CHATS_FILE);
+
+        const newGroupChat = {
+            chatId: `group_${Date.now()}`,
+            isGroup: true,
+            groupName,
+            participants: [...new Set(participants)],
+            messages: []
+        };
+
+        chats.push(newGroupChat);
+        saveJSON(hackatonPaths.CHATS_FILE, chats);
+        return res.json({message: 'Group chat created', chat: newGroupChat});
+    }
+
+    res.status(400).json({error: 'Invalid or unsupported type'});
+});
+
+app.post('/chats/group/send', (req, res) => {
+    const {chatId, from, message, type} = req.body;
+
+    if (type == 1) {
+        const chats = loadJSON(hackatonPaths.CHATS_FILE);
+        const chat = chats.find(c => c.chatId === chatId && c.isGroup);
+
+        if (!chat) return res.status(404).json({message: 'Group chat not found'});
+
+        chat.messages.push({from, message, timestamp: new Date().toISOString()});
+        saveJSON(hackatonPaths.CHATS_FILE, chats);
+        return res.json({success: true});
+    }
+
+    res.status(400).json({error: 'Invalid or unsupported type'});
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 Unified server running at http://localhost:${PORT}`);
 });

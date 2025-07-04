@@ -1,0 +1,77 @@
+[
+  {
+    "chatId": "chat_1720050001001",
+    "isGroup": false,
+    "participants": ["john@example.com", "alice@example.com"],
+    "messages": [
+      {
+        "from": "john@example.com",
+        "message": "Hi Alice, are you joining the hackathon?",
+        "timestamp": "2025-07-04T08:10:00Z"
+      },
+      {
+        "from": "alice@example.com",
+        "message": "Yes, working on the frontend part!",
+        "timestamp": "2025-07-04T08:12:00Z"
+      }
+    ]
+  },
+  {
+    "chatId": "chat_1720050001002",
+    "isGroup": false,
+    "participants": ["test@example.com", "john@example.com"],
+    "messages": [
+      {
+        "from": "test@example.com",
+        "message": "Hey John, can you review my code?",
+        "timestamp": "2025-07-04T08:15:00Z"
+      },
+      {
+        "from": "john@example.com",
+        "message": "Sure! Send it over.",
+        "timestamp": "2025-07-04T08:16:00Z"
+      }
+    ]
+  },
+  {
+    "chatId": "group_1720050002000",
+    "isGroup": true,
+    "groupName": "Frontend Team",
+    "participants": ["test@example.com", "john@example.com", "alice@example.com"],
+    "messages": [
+      {
+        "from": "alice@example.com",
+        "message": "Hey team! Standup at 10?",
+        "timestamp": "2025-07-04T08:30:00Z"
+      },
+      {
+        "from": "john@example.com",
+        "message": "Sounds good to me.",
+        "timestamp": "2025-07-04T08:31:00Z"
+      },
+      {
+        "from": "test@example.com",
+        "message": "I'll be there!",
+        "timestamp": "2025-07-04T08:32:00Z"
+      }
+    ]
+  },
+  {
+    "chatId": "group_1720050003000",
+    "isGroup": true,
+    "groupName": "Hackathon Ideas",
+    "participants": ["john@example.com", "alice@example.com"],
+    "messages": [
+      {
+        "from": "john@example.com",
+        "message": "Any ideas for the hackathon theme?",
+        "timestamp": "2025-07-04T09:00:00Z"
+      },
+      {
+        "from": "alice@example.com",
+        "message": "Maybe something with AI and education?",
+        "timestamp": "2025-07-04T09:01:00Z"
+      }
+    ]
+  }
+]
