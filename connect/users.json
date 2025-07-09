@@ -4,34 +4,44 @@
     "password": "1234",
     "name": "Max Verstappen",
     "bio": "3x World Champion 🏆",
-    "bals": 1200
+    "bals": 1200,
+    "followers": ["hamilton@f1.com", "leclerc@f1.com"],
+    "following": ["leclerc@f1.com"]
   },
   {
     "email": "leclerc@f1.com",
     "password": "1234",
     "name": "Charles Leclerc",
     "bio": "Ferrari driver since 2019 🔴",
-    "bals": 850
+    "bals": 850,
+    "followers": ["hamilton@f1.com", "leclerc@f1.com"],
+    "following": ["leclerc@f1.com"]
   },
   {
     "email": "alonso@f1.com",
     "password": "1234",
     "name": "Fernando Alonso",
     "bio": "The legend returns 🟢",
-    "bals": 1020
+    "bals": 1020,
+    "followers": ["hamilton@f1.com", "leclerc@f1.com"],
+    "following": ["leclerc@f1.com"]
   },
   {
     "email": "hamilton@f1.com",
     "password": "1234",
     "name": "Lewis Hamilton",
     "bio": "7x Formula 1 World Champion 🏁",
-    "bals": 1450
+    "bals": 1450,
+    "followers": ["hamilton@f1.com", "leclerc@f1.com"],
+    "following": ["leclerc@f1.com"]
   },
   {
     "email": "test",
     "password": "test",
     "name": "Test accaunt",
     "bio": " This is the test acc",
-    "bals": 1450
+    "bals": 1450,
+    "followers": ["hamilton@f1.com", "leclerc@f1.com"],
+    "following": ["leclerc@f1.com"]
   }
 ]

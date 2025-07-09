@@ -307,6 +307,67 @@ app.post('/chats/group/send', (req, res) => {
     res.status(400).json({error: 'Invalid or unsupported type'});
 });
 
+
+// Endpoint to follow a user
+app.post('/connect/follow', (req, res) => {
+    const { follower, followee } = req.body;
+    const users = loadJSON(connectPaths.USERS_FILE);
+
+    const followerUser = users.find(u => u.email === follower);
+    const followeeUser = users.find(u => u.email === followee);
+
+    if (!followerUser || !followeeUser) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!followerUser.following) followerUser.following = [];
+    if (!followeeUser.followers) followeeUser.followers = [];
+
+    if (!followerUser.following.includes(followee)) {
+        followerUser.following.push(followee);
+    }
+
+    if (!followeeUser.followers.includes(follower)) {
+        followeeUser.followers.push(follower);
+    }
+
+    saveJSON(connectPaths.USERS_FILE, users);
+    return res.json({ message: 'Followed successfully' });
+});
+
+// Endpoint to unfollow a user
+app.post('/connect/unfollow', (req, res) => {
+    const { follower, followee } = req.body;
+    const users = loadJSON(connectPaths.USERS_FILE);
+
+    const followerUser = users.find(u => u.email === follower);
+    const followeeUser = users.find(u => u.email === followee);
+
+    if (!followerUser || !followeeUser) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    followerUser.following = (followerUser.following || []).filter(email => email !== followee);
+    followeeUser.followers = (followeeUser.followers || []).filter(email => email !== follower);
+
+    saveJSON(connectPaths.USERS_FILE, users);
+    return res.json({ message: 'Unfollowed successfully' });
+});
+
+// Endpoint to return all connect users (for search purposes)
+app.get('/connect/users', (req, res) => {
+    const users = loadJSON(connectPaths.USERS_FILE);
+    // Return only minimal safe public info
+    const publicUsers = users.map(u => ({
+        email: u.email,
+        name: u.name,
+        bio: u.bio,
+        followers: u.followers ? u.followers.length : 0,
+        following: u.following ? u.following.length : 0
+    }));
+    return res.json(publicUsers);
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 Unified server running at http://localhost:${PORT}`);
 });
