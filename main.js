@@ -377,6 +377,20 @@ app.get('/connect/users', (req, res) => {
     return res.json(publicUsers);
 });
 
+//Endpoint to search users
+app.get('/connect/search', (req, res) => {
+    const query = (req.query.query || "").toLowerCase();
+    const users = loadJSON(connectPaths.USERS_FILE);
+
+    // Match by name or email (case-insensitive)
+    const matched = users.filter(user =>
+        user.name.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query)
+    );
+
+    res.json(matched);
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 Unified server running at http://localhost:${PORT}`);
 });
