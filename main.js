@@ -70,7 +70,16 @@ app.post('/register', (req, res) => {
         const bio = req.body.bio || "";
         const bals = req.body.bals != null ? req.body.bals : 1000;
 
-        const newUser = { email, password, name, bio, bals };
+        const newUser = {
+            email,
+            password,
+            name,
+            bio,
+            bals,
+            followers: [],
+            following: []
+        };
+
         users.push(newUser);
         saveJSON(connectPaths.USERS_FILE, users);
         log('Connect', 'User registered', email);
@@ -310,25 +319,25 @@ app.post('/chats/group/send', (req, res) => {
 
 // Endpoint to follow a user
 app.post('/connect/follow', (req, res) => {
-    const { follower, followee } = req.body;
+    const { from, to } = req.body; // match the SwiftUI app
     const users = loadJSON(connectPaths.USERS_FILE);
 
-    const followerUser = users.find(u => u.email === follower);
-    const followeeUser = users.find(u => u.email === followee);
+    const fromUser = users.find(u => u.email === from);
+    const toUser = users.find(u => u.email === to);
 
-    if (!followerUser || !followeeUser) {
+    if (!fromUser || !toUser) {
         return res.status(404).json({ error: 'User not found' });
     }
 
-    if (!followerUser.following) followerUser.following = [];
-    if (!followeeUser.followers) followeeUser.followers = [];
+    if (!fromUser.following) fromUser.following = [];
+    if (!toUser.followers) toUser.followers = [];
 
-    if (!followerUser.following.includes(followee)) {
-        followerUser.following.push(followee);
+    if (!fromUser.following.includes(to)) {
+        fromUser.following.push(to);
     }
 
-    if (!followeeUser.followers.includes(follower)) {
-        followeeUser.followers.push(follower);
+    if (!toUser.followers.includes(from)) {
+        toUser.followers.push(from);
     }
 
     saveJSON(connectPaths.USERS_FILE, users);
@@ -337,18 +346,18 @@ app.post('/connect/follow', (req, res) => {
 
 // Endpoint to unfollow a user
 app.post('/connect/unfollow', (req, res) => {
-    const { follower, followee } = req.body;
+    const { from, to } = req.body;
     const users = loadJSON(connectPaths.USERS_FILE);
 
-    const followerUser = users.find(u => u.email === follower);
-    const followeeUser = users.find(u => u.email === followee);
+    const fromUser = users.find(u => u.email === from);
+    const toUser = users.find(u => u.email === to);
 
-    if (!followerUser || !followeeUser) {
+    if (!fromUser || !toUser) {
         return res.status(404).json({ error: 'User not found' });
     }
 
-    followerUser.following = (followerUser.following || []).filter(email => email !== followee);
-    followeeUser.followers = (followeeUser.followers || []).filter(email => email !== follower);
+    fromUser.following = (fromUser.following || []).filter(email => email !== to);
+    toUser.followers = (toUser.followers || []).filter(email => email !== from);
 
     saveJSON(connectPaths.USERS_FILE, users);
     return res.json({ message: 'Unfollowed successfully' });
