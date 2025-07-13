@@ -400,6 +400,8 @@ app.post('/events/create', (req, res) => {
         return res.status(400).json({message: 'Missing required fields'});
     }
 
+    const events = loadJSON(hackatonPaths.EVENTS_FILE); // ✅ load events
+
     const newEvent = {
         id: `event_${Date.now()}`,
         title,
@@ -407,7 +409,7 @@ app.post('/events/create', (req, res) => {
         amount: amount || null,
         isEmergency,
         imageName,
-        creatorEmail,            // 👈 Added
+        creatorEmail,
         createdAt: new Date().toISOString()
     };
 
