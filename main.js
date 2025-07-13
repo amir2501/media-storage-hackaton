@@ -31,7 +31,9 @@ function saveJSON(file, data) {
 const hackatonPaths = {
     USERS_FILE: path.join(__dirname, 'hackaton', 'users.json'),
     PROJECTS_FILE: path.join(__dirname, 'hackaton', 'projects.json'),
-    CHATS_FILE: path.join(__dirname, 'hackaton', 'chats.json')
+    CHATS_FILE: path.join(__dirname, 'hackaton', 'chats.json'),
+    EVENTS_FILE: path.join(__dirname, 'hackaton', 'events.json')  // new
+
 };
 
 const connectPaths = {
@@ -319,14 +321,14 @@ app.post('/chats/group/send', (req, res) => {
 
 // Endpoint to follow a user
 app.post('/connect/follow', (req, res) => {
-    const { from, to } = req.body; // match the SwiftUI app
+    const {from, to} = req.body; // match the SwiftUI app
     const users = loadJSON(connectPaths.USERS_FILE);
 
     const fromUser = users.find(u => u.email === from);
     const toUser = users.find(u => u.email === to);
 
     if (!fromUser || !toUser) {
-        return res.status(404).json({ error: 'User not found' });
+        return res.status(404).json({error: 'User not found'});
     }
 
     if (!fromUser.following) fromUser.following = [];
@@ -341,26 +343,26 @@ app.post('/connect/follow', (req, res) => {
     }
 
     saveJSON(connectPaths.USERS_FILE, users);
-    return res.json({ message: 'Followed successfully' });
+    return res.json({message: 'Followed successfully'});
 });
 
 // Endpoint to unfollow a user
 app.post('/connect/unfollow', (req, res) => {
-    const { from, to } = req.body;
+    const {from, to} = req.body;
     const users = loadJSON(connectPaths.USERS_FILE);
 
     const fromUser = users.find(u => u.email === from);
     const toUser = users.find(u => u.email === to);
 
     if (!fromUser || !toUser) {
-        return res.status(404).json({ error: 'User not found' });
+        return res.status(404).json({error: 'User not found'});
     }
 
     fromUser.following = (fromUser.following || []).filter(email => email !== to);
     toUser.followers = (toUser.followers || []).filter(email => email !== from);
 
     saveJSON(connectPaths.USERS_FILE, users);
-    return res.json({ message: 'Unfollowed successfully' });
+    return res.json({message: 'Unfollowed successfully'});
 });
 
 // Endpoint to return all connect users (for search purposes)
@@ -389,6 +391,50 @@ app.get('/connect/search', (req, res) => {
     );
 
     res.json(matched);
+});
+
+app.post('/events/create', (req, res) => {
+    const {title, description, amount, isEmergency, imageName, creatorEmail} = req.body;
+
+    if (!title || !description || !imageName || !creatorEmail) {
+        return res.status(400).json({message: 'Missing required fields'});
+    }
+
+    const newEvent = {
+        id: `event_${Date.now()}`,
+        title,
+        description,
+        amount: amount || null,
+        isEmergency,
+        imageName,
+        creatorEmail,            // 👈 Added
+        createdAt: new Date().toISOString()
+    };
+
+    events.push(newEvent);
+    saveJSON(hackatonPaths.EVENTS_FILE, events);
+    log('Hackaton', 'Event created', newEvent);
+    return res.json(newEvent);
+});
+
+app.get('/events', (req, res) => {
+    const events = loadJSON(hackatonPaths.EVENTS_FILE);
+    return res.json(events);
+});
+app.put('/events/:id', (req, res) => {
+    const {id} = req.params;
+    const updates = req.body;
+
+    const events = loadJSON(hackatonPaths.EVENTS_FILE);
+    const index = events.findIndex(e => e.id === id);
+    if (index === -1) {
+        return res.status(404).json({message: 'Event not found'});
+    }
+
+    events[index] = {...events[index], ...updates};
+    saveJSON(hackatonPaths.EVENTS_FILE, events);
+    log('Hackaton', `Event updated ${id}`, updates);
+    return res.json(events[index]);
 });
 
 app.listen(PORT, () => {
