@@ -5,13 +5,19 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 
-
 const IMG_FOLDER = path.join(__dirname, 'connect', 'img');
 const POSTS_FILE = path.join(__dirname, 'connect', 'posts.json');
 
-
+// Ensure folders exist
 if (!fs.existsSync(IMG_FOLDER)) fs.mkdirSync(IMG_FOLDER, { recursive: true });
 
+const HACKATON_IMG_FOLDER = path.join(__dirname, 'hackaton', 'img');
+if (!fs.existsSync(HACKATON_IMG_FOLDER)) fs.mkdirSync(HACKATON_IMG_FOLDER, { recursive: true });
+
+const EVENT_IMG_FOLDER = path.join(__dirname, 'hackaton', 'event_images');
+if (!fs.existsSync(EVENT_IMG_FOLDER)) fs.mkdirSync(EVENT_IMG_FOLDER, { recursive: true });
+
+// Setup Multer storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const userEmail = req.body.email;
@@ -27,19 +33,19 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const app = express();
-const PORT = 8080; // Unified port
+const PORT = 8080;
 
 app.use(cors());
 app.use(express.json());
+
+// Static file routes
 app.use('/connect/img', (req, res, next) => {
     console.log(`📸 Static image request: ${req.path}`);
     next();
-}, express.static(path.join(__dirname, 'connect', 'img')));
-app.use('/hackaton/img', express.static(path.join(__dirname, 'hackaton', 'img')));
-app.use('/hackaton/event_images', express.static(EVENT_IMG_FOLDER));
+}, express.static(IMG_FOLDER));
 
-const HACKATON_IMG_FOLDER = path.join(__dirname, 'hackaton', 'img');
-if (!fs.existsSync(HACKATON_IMG_FOLDER)) fs.mkdirSync(HACKATON_IMG_FOLDER, { recursive: true });
+app.use('/hackaton/img', express.static(HACKATON_IMG_FOLDER));
+app.use('/hackaton/event_images', express.static(EVENT_IMG_FOLDER));
 
 // === Common helpers ===
 function log(source, message, data = null) {
@@ -53,7 +59,6 @@ function loadJSON(file, fallback = []) {
     const data = fs.readFileSync(file, 'utf-8');
     return data.trim() ? JSON.parse(data) : fallback;
 }
-
 function saveJSON(file, data) {
     fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
