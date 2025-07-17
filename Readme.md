@@ -30,6 +30,7 @@ node mergedServer.js
 
 #### 🧍 User
 
+
 | Method | Endpoint    | Body/Query | Description        |
 | ------ | ----------- | ---------- | ------------------ |
 | POST   | `/register` | `{ email, password, type:1 }` | Register a user |
