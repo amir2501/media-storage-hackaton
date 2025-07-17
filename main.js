@@ -3,6 +3,27 @@ const express = require('express');
 const fs = require('fs');
 const cors = require('cors');
 const path = require('path');
+const multer = require('multer');
+
+
+const IMG_FOLDER = path.join(__dirname, 'connect', 'img');
+const POSTS_FILE = path.join(__dirname, 'connect', 'posts.json');
+
+if (!fs.existsSync(IMG_FOLDER)) fs.mkdirSync(IMG_FOLDER, { recursive: true });
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const userEmail = req.body.email;
+        const userFolder = path.join(IMG_FOLDER, userEmail);
+        if (!fs.existsSync(userFolder)) fs.mkdirSync(userFolder, { recursive: true });
+        cb(null, userFolder);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + path.extname(file.originalname);
+        cb(null, uniqueSuffix);
+    }
+});
+const upload = multer({ storage });
 
 const app = express();
 const PORT = 8080; // Unified port
@@ -392,6 +413,119 @@ app.get('/connect/search', (req, res) => {
 
     res.json(matched);
 });
+
+app.post('/connect/upload', upload.single('image'), (req, res) => {
+    const userEmail = req.body.email;
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+
+    const relativePath = `${userEmail}/${req.file.filename}`;
+    res.json({ message: 'Upload successful', imagePath: relativePath });
+});
+
+app.post('/connect/posts/create', (req, res) => {
+    const { title, imagePath, creatorEmail } = req.body;
+    if (!title || !imagePath || !creatorEmail) {
+        return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const posts = loadJSON(POSTS_FILE);
+    const newPost = {
+        id: `post_${Date.now()}`,
+        title,
+        imagePath,
+        creatorEmail,
+        likes: [],
+        comments: [],
+        createdAt: new Date().toISOString()
+    };
+
+    posts.push(newPost);
+    saveJSON(POSTS_FILE, posts);
+    res.json(newPost);
+});
+
+app.get('/connect/posts', (req, res) => {
+    const posts = loadJSON(POSTS_FILE);
+    res.json(posts);
+});
+
+app.put('/connect/posts/:id', (req, res) => {
+    const posts = loadJSON(POSTS_FILE);
+    const index = posts.findIndex(p => p.id === req.params.id);
+    if (index === -1) return res.status(404).json({ message: 'Post not found' });
+
+    posts[index] = { ...posts[index], ...req.body };
+    saveJSON(POSTS_FILE, posts);
+    res.json(posts[index]);
+});
+
+app.delete('/connect/posts/:id', (req, res) => {
+    let posts = loadJSON(POSTS_FILE);
+    const initialLength = posts.length;
+    posts = posts.filter(p => p.id !== req.params.id);
+
+    if (posts.length === initialLength) return res.status(404).json({ message: 'Post not found' });
+
+    saveJSON(POSTS_FILE, posts);
+    res.json({ message: 'Post deleted' });
+});
+
+app.post('/connect/posts/:id/like', (req, res) => {
+    const { userEmail } = req.body;
+    const posts = loadJSON(POSTS_FILE);
+    const post = posts.find(p => p.id === req.params.id);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
+    if (!post.likes.includes(userEmail)) {
+        post.likes.push(userEmail);
+    } else {
+        post.likes = post.likes.filter(e => e !== userEmail);
+    }
+
+    saveJSON(POSTS_FILE, posts);
+    res.json({ likes: post.likes });
+});
+
+app.post('/connect/posts/:id/comment', (req, res) => {
+    const { sender, text } = req.body;
+    const posts = loadJSON(POSTS_FILE);
+    const post = posts.find(p => p.id === req.params.id);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
+    const comment = {
+        id: `comment_${Date.now()}`,
+        sender,
+        text
+    };
+
+    post.comments.push(comment);
+    saveJSON(POSTS_FILE, posts);
+    res.json(comment);
+});
+
+app.put('/connect/posts/:id/comment/:commentId', (req, res) => {
+    const posts = loadJSON(POSTS_FILE);
+    const post = posts.find(p => p.id === req.params.id);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
+    const comment = post.comments.find(c => c.id === req.params.commentId);
+    if (!comment) return res.status(404).json({ message: 'Comment not found' });
+
+    comment.text = req.body.text || comment.text;
+    saveJSON(POSTS_FILE, posts);
+    res.json(comment);
+});
+
+app.delete('/connect/posts/:id/comment/:commentId', (req, res) => {
+    const posts = loadJSON(POSTS_FILE);
+    const post = posts.find(p => p.id === req.params.id);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
+    post.comments = post.comments.filter(c => c.id !== req.params.commentId);
+    saveJSON(POSTS_FILE, posts);
+    res.json({ message: 'Comment deleted' });
+});
+
 
 app.post('/events/create', (req, res) => {
     const {title, description, amount, isEmergency, imageName, creatorEmail} = req.body;
