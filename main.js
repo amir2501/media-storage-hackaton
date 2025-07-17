@@ -9,6 +9,7 @@ const multer = require('multer');
 const IMG_FOLDER = path.join(__dirname, 'connect', 'img');
 const POSTS_FILE = path.join(__dirname, 'connect', 'posts.json');
 
+
 if (!fs.existsSync(IMG_FOLDER)) fs.mkdirSync(IMG_FOLDER, { recursive: true });
 
 const storage = multer.diskStorage({
@@ -30,7 +31,10 @@ const PORT = 8080; // Unified port
 
 app.use(cors());
 app.use(express.json());
-
+app.use('/connect/img', (req, res, next) => {
+    console.log(`📸 Static image request: ${req.path}`);
+    next();
+}, express.static(path.join(__dirname, 'connect', 'img')));
 // === Common helpers ===
 function log(source, message, data = null) {
     const time = new Date().toISOString();
