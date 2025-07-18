@@ -17,6 +17,9 @@ if (!fs.existsSync(HACKATON_IMG_FOLDER)) fs.mkdirSync(HACKATON_IMG_FOLDER, { rec
 const EVENT_IMG_FOLDER = path.join(__dirname, 'hackaton', 'event_images');
 if (!fs.existsSync(EVENT_IMG_FOLDER)) fs.mkdirSync(EVENT_IMG_FOLDER, { recursive: true });
 
+const CHAT_IMG_FOLDER = path.join(__dirname, 'hackaton', 'chat_images');
+if (!fs.existsSync(CHAT_IMG_FOLDER)) fs.mkdirSync(CHAT_IMG_FOLDER, { recursive: true });
+
 // Setup Multer storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -46,6 +49,7 @@ app.use('/connect/img', (req, res, next) => {
 
 app.use('/hackaton/img', express.static(HACKATON_IMG_FOLDER));
 app.use('/hackaton/event_images', express.static(EVENT_IMG_FOLDER));
+app.use('/hackaton/chat_images', express.static(CHAT_IMG_FOLDER));
 
 // === Common helpers ===
 function log(source, message, data = null) {
@@ -647,8 +651,7 @@ app.put('/events/:id', (req, res) => {
     return res.json(events[index]);
 });
 
-const CHAT_IMG_FOLDER = path.join(__dirname, 'hackaton', 'chat_images');
-if (!fs.existsSync(CHAT_IMG_FOLDER)) fs.mkdirSync(CHAT_IMG_FOLDER, { recursive: true });
+
 
 const chatImageStorage = multer.diskStorage({
     destination: (req, file, cb) => {
