@@ -633,7 +633,8 @@ app.post('/connect/chats/send', (req, res) => {
     let chat = chats.find(c =>
         !c.isGroup &&
         c.participants.includes(from) &&
-        c.participants.includes(to)
+        c.participants.includes(to) &&
+        c.participants.length === 2
     );
 
     if (!chat) {
@@ -657,6 +658,11 @@ app.post('/connect/chats/send', (req, res) => {
         success: true,
         chatId: chat.chatId
     });
+});
+
+app.get('/connect/chats/debug', (req, res) => {
+    const chats = loadJSON(CONNECT_CHATS_FILE);
+    res.json(chats);
 });
 
 app.post('/connect/chats/create', (req, res) => {
