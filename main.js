@@ -622,10 +622,14 @@ app.get('/connect/chats/:email', (req, res) => {
 
 app.post('/connect/chats/send', (req, res) => {
     const { from, to, message } = req.body;
-    if (!from || !to || !message) return res.status(400).json({ error: 'Missing fields' });
+
+    if (!from || !to || !message) {
+        return res.status(400).json({ error: 'Missing fields' });
+    }
 
     const chats = loadJSON(CONNECT_CHATS_FILE);
 
+    // Find the 1-on-1 chat between "from" and "to"
     let chat = chats.find(c =>
         !c.isGroup &&
         c.participants.includes(from) &&
@@ -636,15 +640,23 @@ app.post('/connect/chats/send', (req, res) => {
         return res.status(404).json({ error: 'Chat not found' });
     }
 
+    // Append the new message
     chat.messages.push({
         from,
         message,
         timestamp: new Date().toISOString()
     });
 
+    // Save updated chats
     saveJSON(CONNECT_CHATS_FILE, chats);
-    log('Connect', `Message sent from ${from} to ${to}`);
-    res.json({ success: true });
+
+    log('Connect', `Message sent from ${from} to ${to} in chat ${chat.chatId}`);
+
+    // Respond with success and the chat ID
+    res.json({
+        success: true,
+        chatId: chat.chatId
+    });
 });
 
 app.post('/connect/chats/create', (req, res) => {
