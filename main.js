@@ -20,6 +20,8 @@ if (!fs.existsSync(EVENT_IMG_FOLDER)) fs.mkdirSync(EVENT_IMG_FOLDER, { recursive
 const CHAT_IMG_FOLDER = path.join(__dirname, 'hackaton', 'chat_images');
 if (!fs.existsSync(CHAT_IMG_FOLDER)) fs.mkdirSync(CHAT_IMG_FOLDER, { recursive: true });
 
+const CONNECT_CHATS_FILE = path.join(__dirname, 'connect', 'chats.json');
+
 // Setup Multer storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -583,6 +585,138 @@ app.delete('/connect/posts/:id/comment/:commentId', (req, res) => {
     post.comments = post.comments.filter(c => c.id !== req.params.commentId);
     saveJSON(POSTS_FILE, posts);
     res.json({ message: 'Comment deleted' });
+});
+
+// GET all chats for a user (1-on-1 and groups)
+app.get('/connect/chats/:email', (req, res) => {
+    const { email } = req.params;
+    const { type } = req.query; // optional filter
+
+    const chats = loadJSON(CONNECT_CHATS_FILE);
+
+    const filtered = chats.filter(chat => chat.participants.includes(email));
+
+    const result = filtered.map(chat => {
+        const chatTitle = chat.isGroup
+            ? chat.groupName
+            : chat.participants.find(p => p !== email) || 'Chat';
+
+        const messages = (chat.messages || []).map(msg => ({
+            sender: msg.from,
+            content: msg.message,
+            timestamp: msg.timestamp
+        }));
+
+        return {
+            chatId: chat.chatId,
+            chatTitle,
+            participants: chat.participants,
+            isGroup: chat.isGroup || false,
+            messages
+        };
+    });
+
+    log('Connect', `Fetched ${result.length} chats for ${email}`);
+    res.json(result);
+});
+
+app.post('/connect/chats/send', (req, res) => {
+    const { from, to, message } = req.body;
+    if (!from || !to || !message) return res.status(400).json({ error: 'Missing fields' });
+
+    const chats = loadJSON(CONNECT_CHATS_FILE);
+
+    let chat = chats.find(c =>
+        !c.isGroup &&
+        c.participants.includes(from) &&
+        c.participants.includes(to)
+    );
+
+    if (!chat) {
+        return res.status(404).json({ error: 'Chat not found' });
+    }
+
+    chat.messages.push({
+        from,
+        message,
+        timestamp: new Date().toISOString()
+    });
+
+    saveJSON(CONNECT_CHATS_FILE, chats);
+    log('Connect', `Message sent from ${from} to ${to}`);
+    res.json({ success: true });
+});
+
+app.post('/connect/chats/create', (req, res) => {
+    const { from, to } = req.body;
+    if (!from || !to || from === to) {
+        return res.status(400).json({ error: 'Invalid participants' });
+    }
+
+    const chats = loadJSON(CONNECT_CHATS_FILE);
+
+    const existing = chats.find(c =>
+        !c.isGroup &&
+        c.participants.includes(from) &&
+        c.participants.includes(to)
+    );
+
+    if (existing) return res.json({ message: 'Chat already exists', chat: existing });
+
+    const newChat = {
+        chatId: `chat_${Date.now()}`,
+        participants: [from, to],
+        messages: []
+    };
+
+    chats.push(newChat);
+    saveJSON(CONNECT_CHATS_FILE, chats);
+
+    log('Connect', `Created new chat between ${from} and ${to}`);
+    res.json({ message: 'Chat created', chat: newChat });
+});
+
+app.post('/connect/chats/group/send', (req, res) => {
+    const { chatId, from, message, type } = req.body;
+
+    if (type == 1) {
+        const chats = loadJSON(hackatonPaths.CHATS_FILE);
+        const chat = chats.find(c => c.chatId === chatId && c.isGroup);
+
+        if (!chat) return res.status(404).json({ message: 'Group chat not found' });
+
+        chat.messages.push({ from, message, timestamp: new Date().toISOString() });
+        saveJSON(hackatonPaths.CHATS_FILE, chats);
+        return res.json({ success: true });
+    }
+
+    res.status(400).json({ error: 'Invalid or unsupported type' });
+});
+
+app.post('/connect/chats/group/create', (req, res) => {
+    const { groupName, participants, creator, type } = req.body;
+
+    if (type == 1) {
+        if (!groupName || !Array.isArray(participants) || participants.length < 2) {
+            return res.status(400).json({ message: 'Invalid group data' });
+        }
+
+        const chats = loadJSON(hackatonPaths.CHATS_FILE);
+
+        const newGroupChat = {
+            chatId: `group_${Date.now()}`,
+            isGroup: true,
+            groupName,
+            participants: [...new Set(participants)],
+            messages: []
+        };
+
+        chats.push(newGroupChat);
+        saveJSON(hackatonPaths.CHATS_FILE, chats);
+        return res.json({ message: 'Group chat created', chat: newGroupChat });
+    }
+
+    res.status(400).json({ error: 'Invalid or unsupported type' });
 });
 
 
