@@ -621,43 +621,33 @@ app.get('/connect/chats/:email', (req, res) => {
 });
 
 app.post('/connect/chats/send', (req, res) => {
-    const { from, to, message } = req.body;
+    const { chatId, from, message } = req.body;
 
-    if (!from || !to || !message) {
+    console.log("Incoming message:", { chatId, from, message });
+
+    if (!chatId || !from || !message) {
         return res.status(400).json({ error: 'Missing fields' });
     }
 
     const chats = loadJSON(CONNECT_CHATS_FILE);
 
-    // Find the 1-on-1 chat between "from" and "to"
-    let chat = chats.find(c =>
-        !c.isGroup &&
-        c.participants.includes(from) &&
-        c.participants.includes(to) &&
-        c.participants.length === 2
-    );
+    const chat = chats.find(c => c.chatId === chatId);
 
     if (!chat) {
         return res.status(404).json({ error: 'Chat not found' });
     }
 
-    // Append the new message
     chat.messages.push({
         from,
         message,
         timestamp: new Date().toISOString()
     });
 
-    // Save updated chats
     saveJSON(CONNECT_CHATS_FILE, chats);
 
-    log('Connect', `Message sent from ${from} to ${to} in chat ${chat.chatId}`);
+    log('Connect', `Message sent from ${from} in chat ${chatId}`);
 
-    // Respond with success and the chat ID
-    res.json({
-        success: true,
-        chatId: chat.chatId
-    });
+    res.json({ success: true });
 });
 
 app.get('/connect/chats/debug', (req, res) => {
