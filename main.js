@@ -170,7 +170,7 @@ app.post('/register', (req, res) => {
 
         // Fallback values if fields are missing
         const name = req.body.name || "";
-        const bio = req.body.bio || "";i
+        const bio = req.body.bio || "";
         const bals = req.body.bals != null ? req.body.bals : 1000;
 
         const newUser = {
