@@ -106,11 +106,11 @@ const START_MONEY = 1000;
 // === Routes ===
 
 function readUsers() {
-    return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+    return JSON.parse(fs.readFileSync(connectPaths.USERS_FILE, 'utf8'));
 }
 
 function writeUsers(users) {
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
+    fs.writeFileSync(connectPaths.USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
 }
 // Update user location
 app.post('/update-location', (req, res) => {
