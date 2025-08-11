@@ -105,6 +105,44 @@ const START_MONEY = 1000;
 
 // === Routes ===
 
+function readUsers() {
+    return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+}
+
+function writeUsers(users) {
+    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
+}
+// Update user location
+app.post('/update-location', (req, res) => {
+    const { email, locationName, locationCoords } = req.body;
+    if (!email || !locationName || !locationCoords) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    let users = readUsers();
+    let user = users.find(u => u.email === email);
+    if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.locationName = locationName;
+    user.locationCoords = locationCoords; // { lat: ..., lng: ... }
+
+    writeUsers(users);
+    res.json({ success: true, message: 'Location updated successfully' });
+});
+
+// Get all users' names and locations
+app.get('/all-locations', (req, res) => {
+    let users = readUsers();
+    let locations = users.map(u => ({
+        name: u.name,
+        locationName: u.locationName,
+        locationCoords: u.locationCoords
+    }));
+    res.json(locations);
+});
+
 //register for the hackaton and connect apps.
 app.post('/register', (req, res) => {
     const {email, password, type, name, bio} = req.body;
