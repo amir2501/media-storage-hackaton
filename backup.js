@@ -8,9 +8,6 @@ const multer = require('multer');
 const IMG_FOLDER = path.join(__dirname, 'connect', 'img');
 const POSTS_FILE = path.join(__dirname, 'connect', 'posts.json');
 
-const PROFILE_FOLDER = path.join(__dirname, 'connect', 'profile');
-if (!fs.existsSync(PROFILE_FOLDER)) fs.mkdirSync(PROFILE_FOLDER, { recursive: true });
-
 // Ensure folders exist
 if (!fs.existsSync(IMG_FOLDER)) fs.mkdirSync(IMG_FOLDER, { recursive: true });
 
@@ -52,8 +49,6 @@ app.use('/connect/img', (req, res, next) => {
     next();
 }, express.static(IMG_FOLDER));
 
-app.use('/connect/profile', express.static(PROFILE_FOLDER));
-
 app.use('/hackaton/img', express.static(HACKATON_IMG_FOLDER));
 app.use('/hackaton/event_images', express.static(EVENT_IMG_FOLDER));
 app.use('/hackaton/chat_images', express.static(CHAT_IMG_FOLDER));
@@ -73,7 +68,34 @@ function loadJSON(file, fallback = []) {
 function saveJSON(file, data) {
     fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
+
+
+const hackatonStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const userEmail = req.body.email;
+        const eventId = req.body.eventId;
+        if (!userEmail || !eventId) return cb(new Error('Missing email or eventId'));
+
+        const targetFolder = path.join(HACKATON_IMG_FOLDER, userEmail, eventId);
+        if (!fs.existsSync(targetFolder)) fs.mkdirSync(targetFolder, { recursive: true });
+
+        cb(null, targetFolder);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + path.extname(file.originalname);
+        cb(null, uniqueSuffix);
+    }
+});
+const hackatonUpload = multer({ storage: hackatonStorage });
+
 // === Paths ===
+const hackatonPaths = {
+    USERS_FILE: path.join(__dirname, 'hackaton', 'users.json'),
+    PROJECTS_FILE: path.join(__dirname, 'hackaton', 'projects.json'),
+    CHATS_FILE: path.join(__dirname, 'hackaton', 'chats.json'),
+    EVENTS_FILE: path.join(__dirname, 'hackaton', 'events.json')  // new
+
+};
 
 const connectPaths = {
     USERS_FILE: path.join(__dirname, 'connect', 'users.json')
@@ -124,7 +146,21 @@ app.get('/all-locations', (req, res) => {
 //register for the hackaton and connect apps.
 app.post('/register', (req, res) => {
     const {email, password, type, name, bio} = req.body;
-   if (type == 2) {
+
+    if (type == 1) {
+        // Hackaton logic
+        const users = loadJSON(hackatonPaths.USERS_FILE);
+        if (users.find(u => u.email === email)) {
+            log('Hackaton', 'Registration failed: User already exists', email);
+            return res.status(400).json({message: 'User already exists'});
+        }
+
+        users.push({email, password, money: START_MONEY});
+        saveJSON(hackatonPaths.USERS_FILE, users);
+        log('Hackaton', 'User registered', email);
+        return res.json({message: 'User registered successfully'});
+
+    } else if (type == 2) {
         // Connect logic
         const users = loadJSON(connectPaths.USERS_FILE);
         if (users.find(u => u.email === email)) {
@@ -163,7 +199,17 @@ app.post('/register', (req, res) => {
 app.post('/login', (req, res) => {
     const {email, password, type} = req.body;
 
-    if (type == 2) {
+    if (type == 1) {
+        const users = loadJSON(hackatonPaths.USERS_FILE);
+        const user = users.find(u => u.email === email && u.password === password);
+        if (user) {
+            log('Hackaton', 'Login success', email);
+            return res.json({message: 'Login successful', email: user.email, money: user.money});
+        } else {
+            log('Hackaton', 'Login failed', email);
+            return res.status(401).json({message: 'Invalid credentials'});
+        }
+    } else if (type == 2) {
         const users = loadJSON(connectPaths.USERS_FILE);
         const user = users.find(u => u.email === email && u.password === password);
         if (user) {
@@ -176,6 +222,201 @@ app.post('/login', (req, res) => {
     }
 
     res.status(400).json({error: 'Invalid type'});
+});
+
+//Getting all users in hackaton app
+app.post('/getUser', (req, res) => {
+    const {email, type} = req.body;
+
+    if (type == 1) {
+        const users = loadJSON(hackatonPaths.USERS_FILE);
+        const user = users.find(u => u.email === email);
+        if (user) return res.json({email: user.email, money: user.money});
+        log('Hackaton', 'User not found', email);
+        return res.status(404).json({message: 'User not found'});
+    }
+
+    res.status(400).json({error: 'Invalid or unsupported type'});
+});
+
+//Getting profile of user in hackaton app.
+app.get('/profile', (req, res) => {
+    const {email, type} = req.query;
+
+    if (type == 1) {
+        const users = loadJSON(hackatonPaths.USERS_FILE);
+        const user = users.find(u => u.email === email);
+        if (user) return res.json({email: user.email, money: user.money});
+        log('Hackaton', 'Profile not found', email);
+        return res.status(404).json({message: 'User not found'});
+    }
+
+    res.status(400).json({error: 'Invalid or unsupported type'});
+});
+
+//returns all projects in hackaton app.
+app.get('/projects', (req, res) => {
+    const {type} = req.query;
+    if (type == 1) {
+        log('Hackaton', 'Project list requested');
+        return res.json(loadJSON(hackatonPaths.PROJECTS_FILE));
+    }
+
+    res.status(400).json({error: 'Invalid or unsupported type'});
+});
+
+//Chat logic in Hackaton
+app.get('/chats', (req, res) => {
+    const {email, type} = req.query;
+    if (type == 1) {
+        const chats = loadJSON(hackatonPaths.CHATS_FILE).filter(c => c.participants.includes(email));
+        return res.json(chats);
+    }
+
+    res.status(400).json({error: 'Invalid or unsupported type'});
+});
+
+app.post('/chats/send', (req, res) => {
+    const {from, to, message, type} = req.body;
+    if (type == 1) {
+        const chats = loadJSON(hackatonPaths.CHATS_FILE);
+        let chat = chats.find(c => c.participants.includes(from) && c.participants.includes(to));
+        if (!chat) {
+            chat = {
+                chatId: `chat_${Date.now()}`,
+                participants: [from, to],
+                messages: []
+            };
+            chats.push(chat);
+        }
+
+        chat.messages.push({from, message, timestamp: new Date().toISOString()});
+        saveJSON(hackatonPaths.CHATS_FILE, chats);
+        return res.json({success: true});
+    }
+
+    res.status(400).json({error: 'Invalid or unsupported type'});
+});
+
+app.post('/chats/create', (req, res) => {
+    const {from, to, type} = req.body;
+    if (type == 1) {
+        const chats = loadJSON(hackatonPaths.CHATS_FILE);
+        if (!from || !to || from === to) return res.status(400).json({message: 'Invalid participants'});
+
+        let existing = chats.find(c => c.participants.includes(from) && c.participants.includes(to));
+        if (existing) return res.json({message: 'Chat already exists', chat: existing});
+
+        const newChat = {
+            chatId: `chat_${Date.now()}`,
+            participants: [from, to],
+            messages: []
+        };
+
+        chats.push(newChat);
+        saveJSON(hackatonPaths.CHATS_FILE, chats);
+        return res.json({message: 'Chat created', chat: newChat});
+    }
+
+    res.status(400).json({error: 'Invalid or unsupported type'});
+});
+
+app.post('/chats/group/create', (req, res) => {
+    const {groupName, participants, creator, type} = req.body;
+
+    if (type == 1) {
+        if (!groupName || !Array.isArray(participants) || participants.length < 2) {
+            return res.status(400).json({message: 'Invalid group data'});
+        }
+
+        const chats = loadJSON(hackatonPaths.CHATS_FILE);
+
+        const newGroupChat = {
+            chatId: `group_${Date.now()}`,
+            isGroup: true,
+            groupName,
+            participants: [...new Set(participants)],
+            messages: []
+        };
+
+        chats.push(newGroupChat);
+        saveJSON(hackatonPaths.CHATS_FILE, chats);
+        return res.json({message: 'Group chat created', chat: newGroupChat});
+    }
+
+    res.status(400).json({error: 'Invalid or unsupported type'});
+});
+
+app.post('/chats/group/send', (req, res) => {
+    const {chatId, from, message, type} = req.body;
+
+    if (type == 1) {
+        const chats = loadJSON(hackatonPaths.CHATS_FILE);
+        const chat = chats.find(c => c.chatId === chatId && c.isGroup);
+
+        if (!chat) return res.status(404).json({message: 'Group chat not found'});
+
+        chat.messages.push({from, message, timestamp: new Date().toISOString()});
+        saveJSON(hackatonPaths.CHATS_FILE, chats);
+        return res.json({success: true});
+    }
+
+    res.status(400).json({error: 'Invalid or unsupported type'});
+});
+
+//updates users money in hackaton app.
+app.post('/updateMoney', (req, res) => {
+    const {email, amount, projectId, type} = req.body;
+    const {type: actionType} = req.query;
+
+    if (type == 1) {
+        const users = loadJSON(hackatonPaths.USERS_FILE);
+        const projects = loadJSON(hackatonPaths.PROJECTS_FILE);
+        const user = users.find(u => u.email === email);
+
+        if (!user) return res.status(404).json({message: 'User not found'});
+
+        const numericAmount = parseFloat(amount);
+        if (isNaN(numericAmount)) return res.status(400).json({message: 'Invalid amount'});
+
+        let updatedProject = null;
+
+        if (actionType === 'invest') {
+            if (user.money < numericAmount) return res.status(400).json({message: 'Insufficient funds'});
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return res.status(404).json({message: 'Project not found'});
+
+            user.money -= numericAmount;
+            project.investedAmount += numericAmount;
+            updatedProject = project;
+
+            saveJSON(hackatonPaths.PROJECTS_FILE, projects);
+        } else {
+            user.money += numericAmount;
+        }
+
+        saveJSON(hackatonPaths.USERS_FILE, users);
+
+        const response = {
+            message: actionType === 'invest' ? 'Investment successful' : 'Money added',
+            money: user.money
+        };
+        if (updatedProject) response.project = updatedProject;
+
+        return res.json(response);
+    }
+
+    res.status(400).json({error: 'Invalid or unsupported type'});
+});
+
+app.post('/hackaton/upload', hackatonUpload.single('image'), (req, res) => {
+    const { email, eventId } = req.body;
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+
+    const relativePath = `${email}/${eventId}/${req.file.filename}`;
+    log('Hackaton', `Image uploaded by ${email} for event ${eventId}: ${relativePath}`);
+
+    res.json({ message: 'Upload successful', imagePath: relativePath });
 });
 
 //connect profile gets
@@ -483,27 +724,149 @@ app.post('/connect/chats/create', (req, res) => {
     res.json({ message: 'Chat created', chat: newChat });
 });
 
-const profileStorage = multer.diskStorage({
+app.post('/connect/chats/group/send', (req, res) => {
+    const { chatId, from, message, type } = req.body;
+
+    if (type == 1) {
+        const chats = loadJSON(hackatonPaths.CHATS_FILE);
+        const chat = chats.find(c => c.chatId === chatId && c.isGroup);
+
+        if (!chat) return res.status(404).json({ message: 'Group chat not found' });
+
+        chat.messages.push({ from, message, timestamp: new Date().toISOString() });
+        saveJSON(hackatonPaths.CHATS_FILE, chats);
+        return res.json({ success: true });
+    }
+
+    res.status(400).json({ error: 'Invalid or unsupported type' });
+});
+
+app.post('/connect/chats/group/create', (req, res) => {
+    const { groupName, participants, creator, type } = req.body;
+
+    if (type == 1) {
+        if (!groupName || !Array.isArray(participants) || participants.length < 2) {
+            return res.status(400).json({ message: 'Invalid group data' });
+        }
+
+        const chats = loadJSON(hackatonPaths.CHATS_FILE);
+
+        const newGroupChat = {
+            chatId: `group_${Date.now()}`,
+            isGroup: true,
+            groupName,
+            participants: [...new Set(participants)],
+            messages: []
+        };
+
+        chats.push(newGroupChat);
+        saveJSON(hackatonPaths.CHATS_FILE, chats);
+        return res.json({ message: 'Group chat created', chat: newGroupChat });
+    }
+
+    res.status(400).json({ error: 'Invalid or unsupported type' });
+});
+
+
+app.post('/events/create', (req, res) => {
+    const { title, description, amount, isEmergency, imageName, uploadedImagePath, creatorEmail, groupId } = req.body;
+
+    if (!title || !description || !creatorEmail) {
+        return res.status(400).json({ message: 'Missing required fields' });
+    }
+    const eventImagePath = uploadedImagePath || `/default_events/${imageName}`;
+
+    const events = loadJSON(hackatonPaths.EVENTS_FILE);
+
+    const newEvent = {
+        id: `event_${Date.now()}`,
+        title,
+        description,
+        amount: amount || null,
+        isEmergency,
+        imagePath: eventImagePath,
+        creatorEmail,
+        createdAt: new Date().toISOString()
+    };
+
+    events.push(newEvent);
+    saveJSON(hackatonPaths.EVENTS_FILE, events);
+    log('Hackaton', 'Event created', newEvent);
+
+    // If groupId provided, auto-send to group chat
+    if (groupId) {
+        const chats = loadJSON(hackatonPaths.CHATS_FILE);
+        const groupChat = chats.find(c => c.chatId === groupId && c.isGroup);
+
+        if (groupChat) {
+            const eventMessage = {
+                from: creatorEmail,
+                message: `[Event Created] ${title}: ${description}`,
+                eventId: newEvent.id,
+                timestamp: new Date().toISOString()
+            };
+            groupChat.messages.push(eventMessage);
+            saveJSON(hackatonPaths.CHATS_FILE, chats);
+            log('Hackaton', `Event shared in group ${groupId}`, eventMessage);
+        }
+    }
+
+    return res.json(newEvent);
+});
+app.get('/events', (req, res) => {
+    const events = loadJSON(hackatonPaths.EVENTS_FILE);
+    return res.json(events);
+});
+app.put('/events/:id', (req, res) => {
+    const {id} = req.params;
+    const updates = req.body;
+
+    const events = loadJSON(hackatonPaths.EVENTS_FILE);
+    const index = events.findIndex(e => e.id === id);
+    if (index === -1) {
+        return res.status(404).json({message: 'Event not found'});
+    }
+
+    events[index] = {...events[index], ...updates};
+    saveJSON(hackatonPaths.EVENTS_FILE, events);
+    log('Hackaton', `Event updated ${id}`, updates);
+    return res.json(events[index]);
+});
+
+
+
+const chatImageStorage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, PROFILE_FOLDER);
+        cb(null, CHAT_IMG_FOLDER);
     },
     filename: (req, file, cb) => {
-        const email = req.body.email;
-        if (!email) return cb(new Error("Email is required"), "");
-        const ext = path.extname(file.originalname);
-        cb(null, `${email}${ext}`);
+        const uniqueSuffix = Date.now() + path.extname(file.originalname);
+        cb(null, uniqueSuffix);
     }
 });
-const uploadProfile = multer({ storage: profileStorage });
+const chatImageUpload = multer({ storage: chatImageStorage });
 
-// Upload profile picture
-app.post('/connect/profile/upload', uploadProfile.single('image'), (req, res) => {
-    const email = req.body.email;
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+app.post('/chats/sendImage', chatImageUpload.single('image'), (req, res) => {
+    const { from, to, chatId, type } = req.body;
+    if (!req.file) return res.status(400).json({ message: 'No image uploaded' });
 
-    const fileUrl = `/connect/profile/${req.file.filename}`;
-    log('Connect', `Profile picture uploaded for ${email}: ${fileUrl}`);
-    res.json({ message: 'Profile picture uploaded', imageUrl: fileUrl });
+    if (type == 1) {
+        const chats = loadJSON(hackatonPaths.CHATS_FILE);
+        const chat = chats.find(c => c.chatId === chatId);
+        if (!chat) return res.status(404).json({ message: 'Chat not found' });
+
+        const imagePath = `/hackaton/chat_images/${req.file.filename}`;
+        chat.messages.push({
+            from,
+            imagePath,
+            timestamp: new Date().toISOString()
+        });
+
+        saveJSON(hackatonPaths.CHATS_FILE, chats);
+        return res.json({ message: 'Image sent', imagePath });
+    }
+
+    return res.status(400).json({ error: 'Invalid or unsupported type' });
 });
 
 app.listen(PORT, () => {
